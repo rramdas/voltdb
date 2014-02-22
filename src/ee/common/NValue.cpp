@@ -475,20 +475,18 @@ void NValue::deserializeIntoANewNValueList(SerializeInput &input, Pool *dataPool
 {
     ValueType elementType = (ValueType)input.readByte();
     size_t length = input.readShort();
-    int trueSize = NValueList::allocationSizeForLength(length);
-    char* storage = allocateValueStorage(trueSize, dataPool);
-    ::memset(storage, 0, trueSize);
-    NValueList* nvset = new (storage) NValueList(length, elementType);
+    allocateANewNValueList(length, elementType, dataPool);
+    NValueList* nvset = reinterpret_cast<NValueList*>(getObjectValue());
     nvset->deserializeNValues(input, dataPool);
     //TODO: An O(ln(length)) implementation vs. the current O(length) implementation of NValue::inList
     // would likely require some kind of sorting/re-org of values at this point post-update pre-lookup.
 }
 
-void NValue::allocateANewNValueList(size_t length, ValueType elementType)
+void NValue::allocateANewNValueList(size_t length, ValueType elementType, Pool *dataPool)
 {
     int trueSize = NValueList::allocationSizeForLength(length);
-    char* storage = allocateValueStorage(trueSize, NULL);
-    ::memset(storage, 0, trueSize);
+    *reinterpret_cast<void**>(m_data) = stringRefAllocate(trueSize, NULL, dataPool);
+    char* storage = static_cast<char*>(getObjectValue());
     new (storage) NValueList(length, elementType);
 }
 
