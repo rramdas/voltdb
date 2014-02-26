@@ -67,7 +67,6 @@ public class RestrictedPriorityQueue extends PriorityQueue<OrderableTransaction>
 
     long m_newestCandidateTransaction = -1;
     final long m_hsId;
-    long m_txnsPopped = 0;
     QueueState m_state = QueueState.BLOCKED_EMPTY;
     final Mailbox m_mailbox;
     final boolean m_useSafetyDance;
@@ -93,7 +92,6 @@ public class RestrictedPriorityQueue extends PriorityQueue<OrderableTransaction>
         if (m_state == QueueState.UNBLOCKED) {
             retval = super.peek();
             super.poll();
-            m_txnsPopped++;
             // not BLOCKED_EMPTY
             assert(retval != null);
         }
