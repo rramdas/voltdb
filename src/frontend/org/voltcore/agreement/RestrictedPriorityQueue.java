@@ -184,23 +184,6 @@ public class RestrictedPriorityQueue extends PriorityQueue<OrderableTransaction>
     }
 
     /**
-     * Used to poke the PartitionDRGateway with a number that should increase with
-     * time as a lower bound on the txnid of the next real work the EE is going to see.
-     * @return 0 if queue is non-empty, a valid txnid otherwise
-     */
-    public long getEarliestSeenTxnIdAcrossInitiatorsWhenEmpty() {
-        if (m_state != QueueState.BLOCKED_EMPTY)
-            return 0;
-        long txnId = Long.MAX_VALUE;
-        for (LastInitiatorData lid : m_initiatorData.values()) {
-            if (txnId > lid.m_lastSeenTxnId)
-                txnId = lid.m_lastSeenTxnId;
-        }
-        txnId = Math.max(0, txnId);
-        return txnId;
-    }
-
-    /**
      * Remove all pending transactions from the specified initiator
      * and do not require heartbeats from that initiator to proceed.
      * @param initiatorId id of the failed initiator.
