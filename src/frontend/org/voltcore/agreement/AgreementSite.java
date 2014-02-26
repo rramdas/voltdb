@@ -379,8 +379,7 @@ public class AgreementSite implements org.apache.zookeeper_voltpatches.server.Zo
             HeartbeatResponseMessage hrm = (HeartbeatResponseMessage)message;
             m_safetyState.updateLastSeenTxnIdFromExecutorBySiteId(
                     hrm.getExecHSId(),
-                    hrm.getLastReceivedTxnId(),
-                    hrm.isBlocked());
+                    hrm.getLastReceivedTxnId());
         } else if (message instanceof LocalObjectMessage) {
             LocalObjectMessage lom = (LocalObjectMessage)message;
             if (lom.payload instanceof Runnable) {
