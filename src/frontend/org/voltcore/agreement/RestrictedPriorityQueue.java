@@ -17,9 +17,7 @@
 
 package org.voltcore.agreement;
 
-import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.PriorityQueue;
 
@@ -28,7 +26,6 @@ import org.voltcore.agreement.AgreementSite.AgreementTransactionState;
 import org.voltcore.logging.VoltLogger;
 import org.voltcore.messaging.HeartbeatResponseMessage;
 import org.voltcore.messaging.Mailbox;
-import org.voltcore.messaging.VoltMessage;
 import org.voltcore.utils.CoreUtils;
 
 /**
@@ -67,55 +64,6 @@ public class RestrictedPriorityQueue extends PriorityQueue<OrderableTransaction>
     }
 
     final LinkedHashMap<Long, LastInitiatorData> m_initiatorData = new LinkedHashMap<Long, LastInitiatorData>();
-    final LinkedList<RoadBlock> m_roadblocks = new LinkedList<RoadBlock>();
-
-    /**
-     * A future transaction point at which RPQ must send an action
-     * message and stall indefinitely.
-     */
-    static class RoadBlock implements Comparable<RoadBlock> {
-        final long m_transactionId;
-        final QueueState m_reason;
-        final VoltMessage m_action;
-
-        RoadBlock(long id, QueueState reason, VoltMessage action) {
-            m_transactionId = id;
-            m_reason = reason;
-            m_action = action;
-        }
-
-        @Override
-        public int compareTo(RoadBlock o) {
-            if (m_transactionId < o.m_transactionId) {
-                return -1;
-            } else if (m_transactionId > o.m_transactionId) {
-                return 1;
-            }
-            return 0;
-        }
-    }
-
-    public void makeRoadBlock(long blockAfter, QueueState blockReason, VoltMessage action) {
-        RoadBlock roadblock = new RoadBlock(blockAfter, blockReason, action);
-        m_roadblocks.add(roadblock);
-        Collections.sort(m_roadblocks);
-    }
-
-    QueueState checkRoadBlock(long txnId) {
-        // System.out.println("Checking roadblock with txnId: " + txnId);
-        RoadBlock roadblock = m_roadblocks.peek();
-        if (roadblock != null && roadblock.m_transactionId < txnId) {
-            roadblock = m_roadblocks.poll();
-            hostLog.info("Delivering roadblock action: " +
-                         roadblock.m_action + " for txnId: " +
-                         roadblock.m_transactionId);
-            if (roadblock.m_action != null) {
-                m_mailbox.deliverFront(roadblock.m_action);
-            }
-            return roadblock.m_reason;
-        }
-        return QueueState.UNBLOCKED;
-    }
 
     long m_newestCandidateTransaction = -1;
     final long m_hsId;
@@ -327,31 +275,11 @@ public class RestrictedPriorityQueue extends PriorityQueue<OrderableTransaction>
 
         // Empty queue
         if (ts == null) {
-            // Roadblocks - heartbeats can drive an empty queue
-            // to the BLOCKED_CLOSED state, too.
-            QueueState checkRoadBlock = checkRoadBlock(m_newestCandidateTransaction);
-            if (checkRoadBlock == QueueState.BLOCKED_CLOSED) {
-                executeStateChange(checkRoadBlock, ts, lid);
-                return m_state;
-            } else {
-                //No roadblock due to heartbeats, switch to BLOCKED_EMPTY
-                newState = QueueState.BLOCKED_EMPTY;
-                executeStateChange(newState, ts, lid);
-                return m_state;
-            }
-
+            //Switch to BLOCKED_EMPTY
+            newState = QueueState.BLOCKED_EMPTY;
+            executeStateChange(newState, ts, lid);
+            return m_state;
         }
-        assert (newState == QueueState.UNBLOCKED);
-
-        // Roadblocks - txn drives queue to BLOCKED_CLOSED due to roadblock
-        {
-            newState = checkRoadBlock(ts.txnId);
-            if (newState == QueueState.BLOCKED_CLOSED) {
-                executeStateChange(newState, ts, lid);
-                return m_state;
-            }
-        }
-
         assert (newState == QueueState.UNBLOCKED);
 
         if (ts instanceof AgreementTransactionState) {
