@@ -526,6 +526,7 @@ inline void TableTuple::setNValueAllocateForObjectCopies(int idx, const voltdb::
     if (m_schema->columnIsInlined(idx)) {
         return;
     }
+    // Re-allocate any out-of-line objects in the designated pool.
     char *storage = getDataPtr(idx);
     NValue::allocateObjectSelfCopyInStorage(storage, dataPool);
 }

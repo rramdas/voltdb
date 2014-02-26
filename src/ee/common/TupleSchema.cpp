@@ -54,7 +54,7 @@ TupleSchema* TupleSchema::createTupleSchema(const std::vector<ValueType> columnT
         const bool columnAllowNull = allowNull[ii];
         // TODO: ENG-5876 declaredUnitIsBytes will need to be overridable from an input vector
         // to support "COL VARCHAR(30 BYTES)"
-        const bool declaredUnitIsBytes = (type == VALUE_TYPE_VARCHAR);
+        const bool declaredUnitIsBytes = (type != VALUE_TYPE_VARCHAR);
         retval->setColumnMetaData(ii, type, length, declaredUnitIsBytes, columnAllowNull,
                                   &offset, &uninlinedObjectColumnIndex);
     }

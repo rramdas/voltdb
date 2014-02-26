@@ -39,7 +39,7 @@ namespace voltdb {
 class TupleSchema {
 public:
     // This needs to keep in synch with the VoltType.MAX_VALUE_LENGTH defined in java.
-    static const uint32_t COLUMN_MAX_VALUE_LENGTH = 1048576;
+    enum class_constants { COLUMN_MAX_VALUE_LENGTH = 1048576 };
 
     /** Static factory method to create a TupleSchema object with a fixed number of columns */
     static TupleSchema* createTupleSchema(const std::vector<ValueType> columnTypes, const std::vector<int32_t> columnSizes, const std::vector<bool> allowNull, bool allowInlinedStrings);
