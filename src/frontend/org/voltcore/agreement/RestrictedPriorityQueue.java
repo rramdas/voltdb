@@ -138,7 +138,8 @@ public class RestrictedPriorityQueue extends PriorityQueue<OrderableTransaction>
      * Update the information stored about the latest transaction
      * seen from each initiator. Compute the newest safe transaction id.
      */
-    public long noteTransactionRecievedAndReturnLastSeen(long initiatorHSId, long txnId, boolean isHeartbeat, long lastSafeTxnIdFromInitiator)
+    public long noteTransactionRecievedAndReturnLastSeen(long initiatorHSId, long txnId,
+            long lastSafeTxnIdFromInitiator)
     {
         // System.out.printf("Site %d got heartbeat message from initiator %d with txnid/safeid: %d/%d\n",
         //                   m_siteId, initiatorSiteId, txnId, lastSafeTxnIdFromInitiator);
@@ -188,7 +189,7 @@ public class RestrictedPriorityQueue extends PriorityQueue<OrderableTransaction>
      */
     public void gotFaultForInitiator(long initiatorId) {
         // calculate the next minimum transaction w/o our dead friend
-        noteTransactionRecievedAndReturnLastSeen(initiatorId, Long.MAX_VALUE, true, DtxnConstants.DUMMY_LAST_SEEN_TXN_ID);
+        noteTransactionRecievedAndReturnLastSeen(initiatorId, Long.MAX_VALUE, DtxnConstants.DUMMY_LAST_SEEN_TXN_ID);
 
         // remove initiator from minimum. txnid scoreboard
         LastInitiatorData remove = m_initiatorData.remove(initiatorId);
