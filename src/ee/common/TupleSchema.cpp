@@ -266,7 +266,15 @@ uint16_t TupleSchema::countUninlineableObjectColumns(
     const uint16_t numColumns = static_cast<uint16_t>(columnTypes.size());
     uint16_t numUninlineableObjects = 0;
     for (int ii = 0; ii < numColumns; ii++) {
-        if ((columnTypes[ii] == VALUE_TYPE_VARCHAR) || ((columnTypes[ii] == VALUE_TYPE_VARBINARY))) {
+        if (columnTypes[ii] == VALUE_TYPE_VARCHAR) {
+            if (!allowInlineObjects) {
+                numUninlineableObjects++;
+            // TODO: support VARCHAR(60 bytes) explicitly sized at byte scale
+            } else if (columnSizes[ii]*MAX_UTF8_BYTES_PER_CHARACTER >= UNINLINEABLE_OBJECT_LENGTH) {
+                numUninlineableObjects++;
+            }
+        }
+        else if (columnTypes[ii] == VALUE_TYPE_VARBINARY) {
             if (!allowInlineObjects) {
                 numUninlineableObjects++;
             } else if (columnSizes[ii] >= UNINLINEABLE_OBJECT_LENGTH) {
