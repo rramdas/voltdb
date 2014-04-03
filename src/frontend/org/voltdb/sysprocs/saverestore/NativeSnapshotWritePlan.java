@@ -103,8 +103,8 @@ public class NativeSnapshotWritePlan extends SnapshotWritePlan
                     tables.toArray(new Table[0]));
 
         SnapshotDataTarget sdt = null;
-        // If no targets were successfully created, that's our cue to abort.
-        boolean noTargetsCreated = true;
+        // If not all targets were successfully created, that's our cue to abort.
+        int numTargetsCreated = 0;
 
         final ArrayList<SnapshotTableTask> partitionedSnapshotTasks =
             new ArrayList<SnapshotTableTask>();
@@ -157,7 +157,7 @@ public class NativeSnapshotWritePlan extends SnapshotWritePlan
                     partitionedSnapshotTasks.add(task);
                 }
 
-                noTargetsCreated = false;
+                numTargetsCreated++;
                 result.addRow(context.getHostId(),
                         hostname,
                         table.getTypeName(),
@@ -169,7 +169,7 @@ public class NativeSnapshotWritePlan extends SnapshotWritePlan
             }
         }
 
-        if (noTargetsCreated) {
+        if (numTargetsCreated != tables.size()) {
             SnapshotRegistry.discardSnapshot(snapshotRecord);
         }
 
@@ -177,7 +177,7 @@ public class NativeSnapshotWritePlan extends SnapshotWritePlan
         // replicated tasks across all the sites on every host
         placePartitionedTasks(partitionedSnapshotTasks, tracker.getSitesForHost(context.getHostId()));
         placeReplicatedTasks(replicatedSnapshotTasks, tracker.getSitesForHost(context.getHostId()));
-        return noTargetsCreated;
+        return numTargetsCreated != tables.size();
     }
 
     private final SnapshotDataTarget constructSnapshotDataTargetForTable(
